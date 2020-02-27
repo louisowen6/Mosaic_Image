@@ -15,7 +15,7 @@ First, the database of Average RGB need to be created using this [script](https:
 
 ---------------------------------------------------------------------------------------------------------------------------------
 
-This is the first try of my Mosaic Image Generator Project. There will be another improvement in the future. 
+This is the first try of my Mosaic Image Generator Project. There will be another improvement in the future, such as adding transformed image (RGB to BGR, Grayscale, Half-Tone, Dithering, etc) into database. 
 
 
 
