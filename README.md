@@ -17,6 +17,8 @@ First, the database of Average RGB need to be created using this [script](https:
 
 This is the first try of my Mosaic Image Generator Project. There will be another improvement in the future. 
 
+
+
 Created by:
 
 Louis Owen
