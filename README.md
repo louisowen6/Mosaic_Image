@@ -11,3 +11,12 @@ First, the database of Average RGB need to be created using this [script](https:
 4) target_PATH: PATH of the target image
 5) DB_PATH: PATH of the Average RGB database created using this [script](https://github.com/louisowen6/Mosaic_Image/blob/master/build_datasets_avg_rgb.py)
 6) OUTPUT_PATH: destination PATH of the mosaic image output
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+This is the first try of my Mosaic Image Generator Project. There will be another improvement in the future. 
+
+Created by:
+Louis Owen
+LinkedIn: https://www.linkedin.com/in/louisowen6
