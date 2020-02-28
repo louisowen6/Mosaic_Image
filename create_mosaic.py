@@ -4,10 +4,10 @@ import os
 import pandas as pd
 import cv2
 
-def main(pixel_batch_size,rmse_threshold,target_PATH,DB_PATH,OUTPUT_PATH,allow_use_same_image):
+def main(pixel_batch_size,rmse_threshold,target_PATH,DB_PATH,OUTPUT_PATH,allow_use_same_image,adjust_threshold,output_width=100):
 	#Create dataframe of filenames per pixel batch size
-	df,target_image_height,target_image_width,pixel_batch_size=find_filename_per_pixel_batch_size(100,pixel_batch_size,
-		rmse_threshold,allow_use_same_image,
+	df,target_image_height,target_image_width,pixel_batch_size=find_filename_per_pixel_batch_size(output_width,pixel_batch_size,
+		rmse_threshold,allow_use_same_image,adjust_threshold,
 		target_PATH,DB_PATH)
 
 	#Create list of filename per pixel batch size
@@ -45,7 +45,7 @@ def main(pixel_batch_size,rmse_threshold,target_PATH,DB_PATH,OUTPUT_PATH,allow_u
 	print('\n Mosaic Image Saved! \n')
 
 
-def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,allow_use_same_image,target_PATH,DB_PATH):
+def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,allow_use_same_image,adjust_threshold,target_PATH,DB_PATH):
 	'''
 	Function to create dataframe consisting of 
 	appropriate filename per pixel batch size
@@ -76,7 +76,9 @@ def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,a
 	#looping for each image's pixel
 	for i in range(0,height,pixel_batch_size):
 	    for j in range(0,width,pixel_batch_size):
-	        df,name=check_rmse(df,img[i:i+pixel_batch_size,j:j+pixel_batch_size,:],threshold=threshold,allow_repeated_use=allow_use_same_image)
+	        df,name=check_rmse(df,img[i:i+pixel_batch_size,j:j+pixel_batch_size,:],threshold=threshold,
+	        	allow_repeated_use=allow_use_same_image,
+	        	adjust_threshold=adjust_threshold)
 	        filename_list.append(name)
 	        print('Finish Creating Filename DataFrame for pixel %d,%d \r'%(i+pixel_batch_size,j+pixel_batch_size),end='')
 
@@ -105,36 +107,59 @@ def check_pixel_batch_size(pixel_batch_size,img):
         return check_pixel_batch_size(pixel_batch_size,img)
 
 
-def check_rmse(df,batch_pixel,threshold,allow_repeated_use=False):
-    '''
-    Function to calculate rmse between each pixel and average RGB of images in database
-    Input: 
-    df: Database of Average RGB
-    Pixel: pixel list of RGB
-    threshold: threshold for RMSE
-    '''
+def check_rmse(df,batch_pixel,threshold,allow_repeated_use=False,adjust_threshold=1):
+	'''
+	Function to calculate rmse between each pixel and average RGB of images in database
+	Input: 
+	df: Database of Average RGB
+	Pixel: pixel list of RGB
+	threshold: threshold for RMSE
+	'''
+	if adjust_threshold>0:
+		#Extract the average RGB from batch pixel
+		pixel=[np.mean(batch_pixel[:,:,0]),np.mean(batch_pixel[:,:,1]),np.mean(batch_pixel[:,:,2])]
 
-    #Extract the average RGB from batch pixel
-    pixel=[np.mean(batch_pixel[:,:,0]),np.mean(batch_pixel[:,:,1]),np.mean(batch_pixel[:,:,2])]
+		#Slice database with RGB value around the threshold
+		toy=df.copy()
+		toy=toy[(toy.avg_r<=pixel[0]+threshold) & (toy.avg_r>=pixel[0]-threshold) & (toy.avg_g<=pixel[1]+threshold) & (toy.avg_g>=pixel[1]-threshold) & (toy.avg_b<=pixel[2]+threshold) & (toy.avg_b>=pixel[2]-threshold)][['avg_r','avg_g','avg_b']]
+		it=toy.index.tolist()
 
-    #Slice database with RGB value around the threshold
-    toy=df.copy()
-    toy=toy[(toy.avg_r<=pixel[0]+threshold) & (toy.avg_r>=pixel[0]-threshold) & (toy.avg_g<=pixel[1]+threshold) & (toy.avg_g>=pixel[1]-threshold) & (toy.avg_b<=pixel[2]+threshold) & (toy.avg_b>=pixel[2]-threshold)][['avg_r','avg_g','avg_b']]
-    it=toy.index.tolist()
+		#Looping through the sliced database
+		if len(toy)>0:
+			for i in it:
+				rmse=np.sqrt(np.mean((toy.loc[i,['avg_r','avg_g','avg_b']] - pixel)**2)) 
+				if rmse<=threshold:
+					filename=df.loc[i,'filename']
+					if not allow_repeated_use:
+						df=df.drop(i).reset_index(drop=True)
+					break
+			return df,filename
+		else:
+			threshold+=adjust_threshold
+			return check_rmse(df,batch_pixel,threshold,allow_repeated_use)
+	else:
+		#Extract the average RGB from batch pixel
+		pixel=[np.mean(batch_pixel[:,:,0]),np.mean(batch_pixel[:,:,1]),np.mean(batch_pixel[:,:,2])]
 
-    #Looping through the sliced database
-    if len(toy)>0:
-        for i in it:
-            rmse=np.sqrt(np.mean((toy.loc[i,['avg_r','avg_g','avg_b']] - pixel)**2)) 
-            if rmse<=threshold:
-                filename=df.loc[i,'filename']
-                if not allow_repeated_use:
-                	df=df.drop(i).reset_index(drop=True)
-                break
-    else:
-        print('')
-        print('\n ----------------THRESHOLD TOO LOW---------------- \n')
-    return df,filename
+		#Slice database with RGB value around the threshold
+		toy=df.copy()
+		toy=toy[(toy.avg_r<=pixel[0]+threshold) & (toy.avg_r>=pixel[0]-threshold) & (toy.avg_g<=pixel[1]+threshold) & (toy.avg_g>=pixel[1]-threshold) & (toy.avg_b<=pixel[2]+threshold) & (toy.avg_b>=pixel[2]-threshold)][['avg_r','avg_g','avg_b']]
+		it=toy.index.tolist()
+
+		#Looping through the sliced database
+		if len(toy)>0:
+			for i in it:
+				rmse=np.sqrt(np.mean((toy.loc[i,['avg_r','avg_g','avg_b']] - pixel)**2)) 
+				if rmse<=threshold:
+					filename=df.loc[i,'filename']
+					if not allow_repeated_use:
+						df=df.drop(i).reset_index(drop=True)
+					break
+			return df,filename
+		else:
+			print('')
+			print('\n ----------------THRESHOLD TOO LOW---------------- \n')
+    
 
 
 def check_mosaic_builder_size(size,pixel_batch_size):
@@ -153,10 +178,15 @@ if __name__=='__main__':
 
 	target_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/test/test_image_3.jpg'
 	DB_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/Avg_RGB_dataset_VG.csv'
-	OUTPUT_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/output/mosaic_output_3_batch_size_2_thres_9_allow.png'
+	OUTPUT_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/output/mosaic_output_3_batch_size_1_thres_0.5_allow_adjust_0.5.png'
 
-	main(pixel_batch_size=2,rmse_threshold=9,target_PATH=target_PATH,DB_PATH=DB_PATH,OUTPUT_PATH=OUTPUT_PATH,allow_use_same_image=True)
+	main(pixel_batch_size=1,rmse_threshold=0.5,
+		target_PATH=target_PATH,DB_PATH=DB_PATH,OUTPUT_PATH=OUTPUT_PATH,
+		allow_use_same_image=True,adjust_threshold=0.5,
+		output_width=100)
 
 	#pixel_batch_size: control the detail of picture, lower means more detail but takes longer time to produce
 	#rmse_threshold: control the color similarity, try as lower as possible in the beginning, if error then try to add the value slowly
-	#allow_use_same_image: if true then the generator is allowed to use same picture many times
+	#allow_use_same_image: if true then the generator is allowed to use same picture many times. Default is False
+	#adjust_threshold: value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted. Default is 1
+	#output_width: the width of output image. Height will be adjusted to maintain the aspect ratio. Default is 100
