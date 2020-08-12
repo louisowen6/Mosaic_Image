@@ -3,8 +3,6 @@ Generate Mosaic Image from Scratch Using Python
 
 Requirements: PIL, Numpy, Pandas
 
-![alt text](https://github.com/louisowen6/Mosaic_Image/blob/master/collage_1.jpg?raw=true)
-
 Inputs: A set of source images, a target image
 
 Output: A mosaic image that mimics the target image based on the set of source images
