@@ -3,7 +3,7 @@ Generate Mosaic Image from Scratch Using Python
 
 Requirements: PIL, Numpy, Pandas
 
-![alt text](https://github.com/louisowen6/Mosaic_Image/blob/master/mosaic_output_3_batch_size_1_thres_0.5_allow_adjust_0.5.png?raw=true)
+![alt text](https://github.com/louisowen6/Mosaic_Image/blob/master/collage_1.jpg?raw=true)
 
 Inputs: A set of source images, a target image
 
