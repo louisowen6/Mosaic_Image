@@ -31,8 +31,8 @@ optional arguments:
   --pixel_batch_size    	control the detail of picture, lower means more detail but takes longer time to produce.
   --rmse_threshold      	control the color similarity, try as lower as possible in the beginning. If adjust_threshold is 0 and if there is an error indicating "too lower threshold" then try to add the value slowly
   --allow_use_same_image	{Y,N}. If Y then the generator is allowed to use same picture many times
-  --adjust_threshold	    value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted
-  --output_width	 	 	    the width of output image. Height will be adjusted to maintain the aspect ratio
+  --adjust_threshold	        value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted
+  --output_width                the width of output image. Height will be adjusted to maintain the aspect ratio
   --target_PATH	      		PATH to the target image
   --OUTPUT_PATH	      		PATH to the output image
 ```
