@@ -2,13 +2,36 @@ from PIL import Image
 import numpy as np
 import os
 import pandas as pd
-import cv2
+import argparse
 
-def main(pixel_batch_size,rmse_threshold,target_PATH,DB_PATH,OUTPUT_PATH,allow_use_same_image,adjust_threshold,output_width=100):
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Mosaic Image Generator')
+    parser.add_argument('--pixel_batch_size', type=int, default=1, required=True, help='control the detail of picture, lower means more detail but takes longer time to produce.')
+    parser.add_argument('--rmse_threshold', type=float, default=0.5, required=True, help='control the color similarity, try as lower as possible in the beginning. If adjust_threshold is 0 and if there is an error indicating "too lower threshold" then try to add the value slowly')
+    parser.add_argument('--target_PATH', type=str, required=True, help='PATH to the target image')
+    parser.add_argument('--OUTPUT_PATH', type=str, required=True, help='PATH to the output image')
+    parser.add_argument('--allow_use_same_image', type=str, default='Y', choices = ['Y','N'], required=True, help='if true then the generator is allowed to use same picture many times')
+    parser.add_argument('--adjust_threshold', type=float, default=0.5, required=True, help='value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted')
+    parser.add_argument('--output_width', type=int, default=100, required=True, help='the width of output image. Height will be adjusted to maintain the aspect ratio')
+    return parser.parse_args()
+
+
+def main():
+	args = get_args()
+
+	pixel_batch_size = args.pixel_batch_size
+	rmse_threshold = args.rmse_threshold
+	target_PATH = args.target_PATH
+	OUTPUT_PATH = args.OUTPUT_PATH
+	allow_use_same_image = True if args.allow_use_same_image=='Y' else False
+	adjust_threshold = args.adjust_threshold
+	output_width = args.output_width
+
 	#Create dataframe of filenames per pixel batch size
 	df,target_image_height,target_image_width,pixel_batch_size=find_filename_per_pixel_batch_size(output_width,pixel_batch_size,
 		rmse_threshold,allow_use_same_image,adjust_threshold,
-		target_PATH,DB_PATH)
+		target_PATH)
 
 	#Create list of filename per pixel batch size
 	filenames=df.filename.tolist()
@@ -31,21 +54,27 @@ def main(pixel_batch_size,rmse_threshold,target_PATH,DB_PATH,OUTPUT_PATH,allow_u
 	#Create Mosaic Picture
 	for i in range(0,target_image_height*k,size):
 		for j in range(0,target_image_width*k,size):
-			img=Image.open('C:/Users/Louis Owen/Desktop/Mosaic_Image/imgs/VG_100K/'+filenames[0])
+			img=Image.open('C:/Users/Louis Owen/Desktop/us/'+filenames[0])
 			img=np.array(img.resize((size,size)))
+			try:
+				img.shape[2]
+			except:#for grayscale image, convert into 3d array
+				img = np.stack((img,)*3, axis=-1)
+
 			if len(filenames)>0:
 				filenames.pop(0)
 			img_concat[i:i+size,j:j+size,:]=img
 			print('Finish Creating Mosaic for pixel %d,%d \r'%(i+size,j+size),end='')
 	
-	img_concat=cv2.resize(img_concat, dsize=(int(target_image_width*k/2),int(target_image_height*k/2)), interpolation=cv2.INTER_AREA)
+	# img_concat=cv2.resize(img_concat, dsize=(int(target_image_width*k/2),int(target_image_height*k/2)), interpolation=cv2.INTER_AREA)
 	output=Image.fromarray(img_concat.astype(np.uint8))
+	output = output.resize((int(target_image_width*k/2),int(target_image_height*k/2)), Image.ANTIALIAS)
 	output.save(OUTPUT_PATH)
 	print('')
 	print('\n Mosaic Image Saved! \n')
 
 
-def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,allow_use_same_image,adjust_threshold,target_PATH,DB_PATH):
+def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,allow_use_same_image,adjust_threshold,target_PATH):
 	'''
 	Function to create dataframe consisting of 
 	appropriate filename per pixel batch size
@@ -65,7 +94,7 @@ def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,a
 	print('')
 
 	#Import Database of Average RGB
-	df=pd.read_csv(DB_PATH)
+	df=pd.read_csv('Avg_RGB_dataset.csv')
 
 	height=img.shape[0]
 	width=img.shape[1]
@@ -76,7 +105,10 @@ def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,a
 	#looping for each image's pixel
 	for i in range(0,height,pixel_batch_size):
 	    for j in range(0,width,pixel_batch_size):
-	        df,name=check_rmse(df,img[i:i+pixel_batch_size,j:j+pixel_batch_size,:],threshold=threshold,
+	        df,name=check_rmse(
+	        	df,
+	        	img[i:i+pixel_batch_size,j:j+pixel_batch_size,:],
+	        	threshold=threshold,
 	        	allow_repeated_use=allow_use_same_image,
 	        	adjust_threshold=adjust_threshold)
 	        filename_list.append(name)
@@ -176,17 +208,4 @@ def check_mosaic_builder_size(size,pixel_batch_size):
 
 if __name__=='__main__':
 
-	target_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/test/test_image_3.jpg'
-	DB_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/Avg_RGB_dataset_VG.csv'
-	OUTPUT_PATH='C:/Users/Louis Owen/Desktop/Mosaic_Image/output/mosaic_output_3_batch_size_1_thres_0.5_allow_adjust_0.5.png'
-
-	main(pixel_batch_size=1,rmse_threshold=0.5,
-		target_PATH=target_PATH,DB_PATH=DB_PATH,OUTPUT_PATH=OUTPUT_PATH,
-		allow_use_same_image=True,adjust_threshold=0.5,
-		output_width=100)
-
-	#pixel_batch_size: control the detail of picture, lower means more detail but takes longer time to produce
-	#rmse_threshold: control the color similarity, try as lower as possible in the beginning, if error then try to add the value slowly
-	#allow_use_same_image: if true then the generator is allowed to use same picture many times. Default is False
-	#adjust_threshold: value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted. Default is 1
-	#output_width: the width of output image. Height will be adjusted to maintain the aspect ratio. Default is 100
+	main()
