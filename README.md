@@ -9,6 +9,8 @@ Inputs: A set of source images, a target image
 
 Output: A mosaic image that mimics the target image based on the set of source images
 
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
 First, the database of Average RGB from the source images folder need to be generated. 
 
 ```bash
@@ -27,11 +29,10 @@ usage: create_mosaic.py [-h] --pixel_batch_size 1 --output_width 100
 optional arguments:
   -h, --help            	show this help message and exit
   --pixel_batch_size    	control the detail of picture, lower means more detail but takes longer time to produce.
-  --rmse_threshold      	control the color similarity, try as lower as possible in the beginning. If adjust_threshold is 0 and if there 	 					   is an error indicating "too lower threshold" then try to add the value slowly
-  --allow_use_same_image	{Y,N}
-  							if Y then the generator is allowed to use same picture many times
-  --adjust_threshold	    value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it 						  will not adjusted
-  --output_width	 	 	the width of output image. Height will be adjusted to maintain the aspect ratio
+  --rmse_threshold      	control the color similarity, try as lower as possible in the beginning. If adjust_threshold is 0 and if there is an error indicating "too lower threshold" then try to add the value slowly
+  --allow_use_same_image	{Y,N}. If Y then the generator is allowed to use same picture many times
+  --adjust_threshold	    value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted
+  --output_width	 	 	    the width of output image. Height will be adjusted to maintain the aspect ratio
   --target_PATH	      		PATH to the target image
   --OUTPUT_PATH	      		PATH to the output image
 ```
