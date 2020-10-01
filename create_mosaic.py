@@ -10,6 +10,7 @@ def get_args():
     parser.add_argument('--pixel_batch_size', type=int, default=1, required=True, help='control the detail of picture, lower means more detail but takes longer time to produce.')
     parser.add_argument('--rmse_threshold', type=float, default=0.5, required=True, help='control the color similarity, try as lower as possible in the beginning. If adjust_threshold is 0 and if there is an error indicating "too lower threshold" then try to add the value slowly')
     parser.add_argument('--target_PATH', type=str, required=True, help='PATH to the target image')
+    parser.add_argument('--source_PATH', type=str, required=True, help='PATH to the set of source images')
     parser.add_argument('--OUTPUT_PATH', type=str, required=True, help='PATH to the output image')
     parser.add_argument('--allow_use_same_image', type=str, default='Y', choices = ['Y','N'], required=True, help='if true then the generator is allowed to use same picture many times')
     parser.add_argument('--adjust_threshold', type=float, default=0.5, required=True, help='value of adjusted threshold for pixels which have rmse higher then the given initial threshold. If 0 then it will not adjusted')
@@ -22,19 +23,17 @@ def main():
 
 	pixel_batch_size = args.pixel_batch_size
 	rmse_threshold = args.rmse_threshold
+	source_PATH = args.source_PATH
 	target_PATH = args.target_PATH
 	OUTPUT_PATH = args.OUTPUT_PATH
 	allow_use_same_image = True if args.allow_use_same_image=='Y' else False
 	adjust_threshold = args.adjust_threshold
 	output_width = args.output_width
 
-	#Create dataframe of filenames per pixel batch size
-	df,target_image_height,target_image_width,pixel_batch_size=find_filename_per_pixel_batch_size(output_width,pixel_batch_size,
+	#Generate list of of relevant filenames per pixel batch size
+	filenames,target_image_height,target_image_width,pixel_batch_size=find_filename_per_pixel_batch_size(output_width,pixel_batch_size,
 		rmse_threshold,allow_use_same_image,adjust_threshold,
 		target_PATH)
-
-	#Create list of filename per pixel batch size
-	filenames=df.filename.tolist()
 
 	#Adjust Mosaic Builder Size so it is the multiplies of pixel batch size
 	size=check_mosaic_builder_size(size=50,pixel_batch_size=pixel_batch_size)
@@ -42,19 +41,19 @@ def main():
 	print('Used Mosaic Builder Size: ',size)
 	print('')
 
-	#Multiplier Constanst
+	#Constant Multiplier 
 	k=int(size/pixel_batch_size)
 
 	#Iteration index
 	index=0
 
-	#Create Zeros Array for Mosaic
+	#Initiate Zeros Tensor for Mosaic
 	img_concat=np.zeros((target_image_height*k,target_image_width*k,3))
 
 	#Create Mosaic Picture
 	for i in range(0,target_image_height*k,size):
 		for j in range(0,target_image_width*k,size):
-			img=Image.open('C:/Users/Louis Owen/Desktop/us/'+filenames[0])
+			img=Image.open(source_PATH+filenames[0])
 			img=np.array(img.resize((size,size)))
 			try:
 				img.shape[2]
@@ -76,8 +75,8 @@ def main():
 
 def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,allow_use_same_image,adjust_threshold,target_PATH):
 	'''
-	Function to create dataframe consisting of 
-	appropriate filename per pixel batch size
+	Function to return a list of 
+	relevant filename per pixel batch size
 	'''
 	#Import target image
 	img=Image.open(target_PATH)
@@ -116,13 +115,7 @@ def find_filename_per_pixel_batch_size(resize_width,pixel_batch_size,threshold,a
 
 	print('')
 
-	#Convert List to Pandas DataFrame
-	filename_df=pd.DataFrame(filename_list,columns=['filename'])
-
-	#Export Filename for each pixel dataframe
-	filename_df.to_csv('C:/Users/Louis Owen/Desktop/Mosaic_Image/filename_each_pixel.csv',index=False)
-
-	return filename_df,height,width,pixel_batch_size
+	return filename_list,height,width,pixel_batch_size
 
 
 def check_pixel_batch_size(pixel_batch_size,img):

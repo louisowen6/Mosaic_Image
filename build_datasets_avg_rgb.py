@@ -44,17 +44,6 @@ def build_dataframe_average_rgb():
             df=df.append({'filename':'enh_' + filename,'avg_r':np.mean(img_enh_array[:,:,0]),'avg_g':np.mean(img_enh_array[:,:,1]),'avg_b':np.mean(img_enh_array[:,:,2])},ignore_index=True)
             img_enh.save(source+'enh_'+filename)
 
-            #Rotated Image
-            rot_90_img = img.rotate(90, expand=True)
-            rot_90_img_array = np.array(rot_90_img)
-            df=df.append({'filename':'rot_90_' + filename,'avg_r':np.mean(rot_90_img_array[:,:,0]),'avg_g':np.mean(rot_90_img_array[:,:,1]),'avg_b':np.mean(rot_90_img_array[:,:,2])},ignore_index=True)
-            img_enh.save(source+'rot_90_'+filename)
-
-            rot_180_img = img.rotate(180,  expand=True)
-            rot_180_img_array = np.array(rot_180_img)
-            df=df.append({'filename':'rot_180_' + filename,'avg_r':np.mean(rot_180_img_array[:,:,0]),'avg_g':np.mean(rot_180_img_array[:,:,1]),'avg_b':np.mean(rot_180_img_array[:,:,2])},ignore_index=True)
-            img_enh.save(source+'rot_180_'+filename)
-
             # Grayscale Image
             grey_img = img.convert('L')
             grey_img_array = np.array(grey_img)
