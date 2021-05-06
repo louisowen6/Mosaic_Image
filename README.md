@@ -2,16 +2,16 @@
 
 Code implementation of the article: "[How to Build a Mosaic Image Generator from Scratch](https://medium.datadriveninvestor.com/how-to-build-your-mosaic-image-from-scratch-using-python-123e1934e977)"
 
+![alt text](https://github.com/louisowen6/Mosaic_Image/blob/master/collage_1.JPG?raw=true)
 
 Requirements: PIL, Numpy, Pandas
-
-![alt text](https://github.com/louisowen6/Mosaic_Image/blob/master/collage_1.JPG?raw=true)
 
 Inputs: A set of source images, a target image
 
 Output: A mosaic image that mimics the target image based on the set of source images
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
+# Usage
 
 First, the database of Average RGB from the source images folder need to be generated. 
 
@@ -23,7 +23,7 @@ arguments:
   --SOURCE_PATH         Path to source images folder
 ```
 
-Then based on the generated Average RGB dataset and the target image, final mosaic image is generated.
+Then based on the generated Average RGB dataset and the target image, we can generate the final mosaic image.
 
 ```bash
 usage: create_mosaic.py [-h] --pixel_batch_size 1 --output_width 100
