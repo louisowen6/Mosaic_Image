@@ -1,5 +1,7 @@
 # Mosaic-Image
-Generate Mosaic Image from Scratch Using Python
+
+Code implementation of the article: "[How to Build a Mosaic Image Generator from Scratch](https://medium.datadriveninvestor.com/how-to-build-your-mosaic-image-from-scratch-using-python-123e1934e977)"
+
 
 Requirements: PIL, Numpy, Pandas
 
